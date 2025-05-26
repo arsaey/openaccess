@@ -52,7 +52,7 @@ class AuthController extends Controller
             $uidUsage->type == 'none';
         }
 
-        return response()->json(['status' => 'ok', 'credit' => ($uidUsage->type == 'none' ? $uidUsage->remainFreeCredit() : ($uidUsage->type == 'credit' ? $uidUsage->remainPurchedCredit() : 'time')), 'userIsNone' => $uidUsage->type == 'none' ? true : false, 'userIsIran' => auth()->user()->is_iran]);
+        return response()->json(['status' => 'ok','userUid'=> auth()->user()->uid , 'credit' => ($uidUsage->type == 'none' ? $uidUsage->remainFreeCredit() : ($uidUsage->type == 'credit' ? $uidUsage->remainPurchedCredit() : 'time')), 'userIsNone' => $uidUsage->type == 'none' ? true : false, 'userIsIran' => auth()->user()->is_iran]);
     }
     public function register(Request $request)
     {

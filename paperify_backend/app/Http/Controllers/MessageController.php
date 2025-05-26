@@ -23,13 +23,13 @@ class MessageController extends Controller
         $uidUsage = UidUsage::where('uid', auth()->user()->uid)->first();
         if ($uidUsage->type == 'none') {
             if ($uidUsage->remainFreeCredit() > 0) {
-                $final[] = ['author' => 'system', 'type' => 'system', 'data' => ['text' => 'you have ' . $uidUsage->remainFreeCredit() . ' credit(s) left', 'meta' => date('Y-m-d H:i:s')]];
+                $final[] = ['author' => 'system', 'type' => 'system', 'data' => ['text' => 'you now have ' . $uidUsage->remainFreeCredit() . ' chat credit(s)', 'meta' => date('Y-m-d H:i:s')]];
             } else {
                 $final[] = ['author' => 'system', 'type' => 'system', 'data' => ['text' => 'you already used all your credits', 'meta' => date('Y-m-d H:i:s')]];
             }
         } else {
             if ($uidUsage->type == 'credit') {
-                $final[] = ['author' => 'system', 'type' => 'system', 'data' => ['text' => 'you have ' . $uidUsage->remainPurchedCredit() . ' credit(s) left', 'meta' => date('Y-m-d H:i:s')]];
+                $final[] = ['author' => 'system', 'type' => 'system', 'data' => ['text' => 'you now have ' . $uidUsage->remainPurchedCredit() . ' credit(s)', 'meta' => date('Y-m-d H:i:s')]];
             } else {
                 $final[] = ['author' => 'system', 'type' => 'system', 'data' => ['text' => 'you have active subscription', 'meta' => date('Y-m-d H:i:s')]];
             }
