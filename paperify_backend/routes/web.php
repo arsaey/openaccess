@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Morilog\Jalali\Jalalian;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -41,19 +42,6 @@ Route::post('get-report', function (Request $request) {
         return str_replace($arabic, $english, str_replace($persian, $english, $input));
     }
 
-function toJalali($carbonDate) {
-    $formatter = new IntlDateFormatter(
-        'fa_IR@calendar=persian',
-        IntlDateFormatter::SHORT,
-        IntlDateFormatter::SHORT,
-        'Asia/Tehran',
-        IntlDateFormatter::TRADITIONAL,
-        'yyyy/MM/dd HH:mm'
-    );
-
-    // استفاده از شی DateTime به‌جای timestamp
-    return $formatter->format($carbonDate->toDateTime());
-}
     $request->merge([
         'uid' => convertToEnglishDigits($request->uid),
         'start_datetime' => convertToEnglishDigits($request->start_datetime),
@@ -82,12 +70,15 @@ function toJalali($carbonDate) {
 
     $response = new StreamedResponse(function () use ($messages) {
         $handle = fopen('php://output', 'w');
-        fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM for Persian text
+        fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+
         fputcsv($handle, ['email', 'time', 'message']);
 
         foreach ($messages as $message) {
-            $tehranTime = Carbon::parse($message->time)->setTimezone('Asia/Tehran');
-            $jalaliTime = toJalali($tehranTime);
+            $utcTime = Carbon::createFromFormat('Y-m-d H:i:s', $message->time, 'UTC');
+
+            $jalali = Jalalian::fromCarbon($utcTime);
+            $formattedDate = $jalali->format('Y/m/d H:i');
 
             $text = preg_replace_callback('/[۰-۹٠-٩]/u', function ($match) {
                 $map = ['۰'=>'0','۱'=>'1','۲'=>'2','۳'=>'3','۴'=>'4','۵'=>'5','۶'=>'6','۷'=>'7','۸'=>'8','۹'=>'9',
@@ -95,7 +86,7 @@ function toJalali($carbonDate) {
                 return $map[$match[0]];
             }, $message->text);
 
-            fputcsv($handle, [$message->email, $jalaliTime, $text]);
+            fputcsv($handle, [$message->email, $formattedDate, $text]);
         }
 
         fclose($handle);
@@ -106,7 +97,6 @@ function toJalali($carbonDate) {
 
     return $response;
 });
-
 
 
 });
