@@ -30,7 +30,24 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('report-by-uid', function () {
         return view('report-by-uid');
     });
+
     Route::post('get-report', function (Request $request) {
+
+    // Convert Persian/Arabic numbers to English
+        function convertToEnglishDigits($input) {
+            $persian = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+            $arabic  = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+            $english = ['0','1','2','3','4','5','6','7','8','9'];
+            return str_replace($arabic, $english, str_replace($persian, $english, $input));
+        }
+
+    // Convert all input values to English digits
+         $request->merge([
+            'uid' => convertToEnglishDigits($request->uid),
+            'start_datetime' => convertToEnglishDigits($request->start_datetime),
+            'end_datetime' => convertToEnglishDigits($request->end_datetime),
+         ]);
+
         $request->validate([
             'uid' => 'required|string',
             'start_datetime' => 'required|date',
@@ -41,22 +58,32 @@ Route::group(['prefix' => 'admin'], function () {
         $start = $request->start_datetime;
         $end = $request->end_datetime;
 
-        // Join messages with users
         $messages = DB::table('messages')
-            ->join('users', 'messages.user_id', '=', 'users.id')
-            ->where('users.uid', $uid)->where('messages.role', 'user')->where('is_weekly_free_usage', 0)
-            ->whereBetween('messages.created_at', [$start, $end])
-            ->select('users.email', 'messages.created_at as time', 'messages.text')
-            ->orderBy('messages.created_at')
-            ->get();
+        ->join('users', 'messages.user_id', '=', 'users.id')
+        ->where('users.uid', $uid)
+        ->where('messages.role', 'user')
+        ->where('is_weekly_free_usage', 0)
+        ->whereBetween('messages.created_at', [$start, $end])
+        ->select('users.email', 'messages.created_at as time', 'messages.text')
+        ->orderBy('messages.created_at')
+        ->get();
 
-        // Create CSV response
         $response = new StreamedResponse(function () use ($messages) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['email', 'time', 'message']);
 
             foreach ($messages as $message) {
-                fputcsv($handle, [$message->email, $message->time, str_split($message->text, 20)[0]]);
+            // Convert time to Asia/Tehran timezone
+                $tehranTime = Carbon::parse($message->time)->setTimezone('Asia/Tehran')->format('Y-m-d H:i:s');
+
+            // Ensure message text uses English digits
+                $text = preg_replace_callback('/[۰-۹٠-٩]/u', function ($match) {
+                    $map = ['۰'=>'0','۱'=>'1','۲'=>'2','۳'=>'3','۴'=>'4','۵'=>'5','۶'=>'6','۷'=>'7','۸'=>'8','۹'=>'9',
+                        '٠'=>'0','١'=>'1','٢'=>'2','٣'=>'3','٤'=>'4','٥'=>'5','٦'=>'6','٧'=>'7','٨'=>'8','٩'=>'9'];
+                    return $map[$match[0]];
+                }, $message->text);
+
+                fputcsv($handle, [$message->email, $tehranTime, str_split($text, 20)[0]]);
             }
 
             fclose($handle);
@@ -67,4 +94,5 @@ Route::group(['prefix' => 'admin'], function () {
 
         return $response;
     });
+
 });

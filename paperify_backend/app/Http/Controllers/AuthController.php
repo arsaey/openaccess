@@ -178,6 +178,9 @@ class AuthController extends Controller
         $chatLimit = $client->Paperify_SelectChatLimitCount($paramsCheckCredit);
         $chatLimit = $chatLimit->Paperify_SelectChatLimitCountResult;
         $authResult = json_decode(json_encode(['status' => 'ok', 'value' => (int) $result->Paperify_SelectCreditResult]));
+        if(isset($_GET['test'])){
+            var_dump($chatLimit,$authResult);
+        }
         if ($chatLimit) {
             $countUser = User::where('uid', $request->uid)->count();
             if ($countUser * ((int) $chatLimit) > (int) $authResult->value) {
@@ -223,6 +226,13 @@ class AuthController extends Controller
                         'each_user_limit' => $chatLimit,
                         'is_uni' => $chatLimit > 0
                     ]);
+                }else{
+                     UidUsage::where('uid', $user->uid)->update([
+                         'usage_type' => ((int) $authResult->value) === -123 ? 'time' : (((int) $authResult->value) == 0 ? 'none' : 'credit'),
+                        'credits_count' => ((int) $authResult->value) === -123 ? 0 : (((int) $authResult->value) == 0 ? 0 : ((int) $authResult->value)),
+                        'each_user_limit' => $chatLimit,
+                        'is_uni' => $chatLimit > 0
+                     ]);
                 }
             } else {
                 $apiResponse = Http::post(env('OPENALEX_API') . "/user/login", [
