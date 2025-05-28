@@ -41,19 +41,19 @@ Route::post('get-report', function (Request $request) {
         return str_replace($arabic, $english, str_replace($persian, $english, $input));
     }
 
-    function toJalali($carbonDate) {
-        $timestamp = $carbonDate->getTimestamp();
-        $formatter = new IntlDateFormatter(
-            'fa_IR@calendar=persian',
-            IntlDateFormatter::FULL,
-            IntlDateFormatter::SHORT,
-            'Asia/Tehran',
-            IntlDateFormatter::TRADITIONAL,
-            'yyyy/MM/dd HH:mm'
-        );
-        return $formatter->format($timestamp);
-    }
+function toJalali($carbonDate) {
+    $formatter = new IntlDateFormatter(
+        'fa_IR@calendar=persian',
+        IntlDateFormatter::SHORT,
+        IntlDateFormatter::SHORT,
+        'Asia/Tehran',
+        IntlDateFormatter::TRADITIONAL,
+        'yyyy/MM/dd HH:mm'
+    );
 
+    // استفاده از شی DateTime به‌جای timestamp
+    return $formatter->format($carbonDate->toDateTime());
+}
     $request->merge([
         'uid' => convertToEnglishDigits($request->uid),
         'start_datetime' => convertToEnglishDigits($request->start_datetime),
