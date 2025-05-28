@@ -75,7 +75,7 @@ Route::post('get-report', function (Request $request) {
         fputcsv($handle, ['email', 'time', 'message']);
 
         foreach ($messages as $message) {
-            $utcTime = Carbon::createFromFormat('Y-m-d H:i:s', $message->time, 'UTC');
+            $utcTime = Carbon::createFromFormat('Y-m-d H:i:s', $message->time, 'Asia\Tehran');
 
             $jalali = Jalalian::fromCarbon($utcTime);
             $formattedDate = $jalali->format('Y/m/d H:i');
