@@ -86,7 +86,7 @@ Route::post('get-report', function (Request $request) {
         fputcsv($handle, ['email', 'time', 'message']);
 
         foreach ($messages as $message) {
-            $tehranTime = Carbon::parse($message->time);
+            $tehranTime = Carbon::parse($message->time)->setTimezone('Asia/Tehran');
             $jalaliTime = toJalali($tehranTime);
 
             $text = preg_replace_callback('/[۰-۹٠-٩]/u', function ($match) {
