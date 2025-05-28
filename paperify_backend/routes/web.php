@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -33,7 +34,6 @@ Route::group(['prefix' => 'admin'], function () {
 
     Route::post('get-report', function (Request $request) {
 
-    // Convert Persian/Arabic numbers to English
         function convertToEnglishDigits($input) {
             $persian = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
             $arabic  = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
@@ -41,12 +41,11 @@ Route::group(['prefix' => 'admin'], function () {
             return str_replace($arabic, $english, str_replace($persian, $english, $input));
         }
 
-    // Convert all input values to English digits
-         $request->merge([
+        $request->merge([
             'uid' => convertToEnglishDigits($request->uid),
             'start_datetime' => convertToEnglishDigits($request->start_datetime),
             'end_datetime' => convertToEnglishDigits($request->end_datetime),
-         ]);
+        ]);
 
         $request->validate([
             'uid' => 'required|string',
@@ -59,40 +58,41 @@ Route::group(['prefix' => 'admin'], function () {
         $end = $request->end_datetime;
 
         $messages = DB::table('messages')
-        ->join('users', 'messages.user_id', '=', 'users.id')
-        ->where('users.uid', $uid)
-        ->where('messages.role', 'user')
-        ->where('is_weekly_free_usage', 0)
-        ->whereBetween('messages.created_at', [$start, $end])
-        ->select('users.email', 'messages.created_at as time', 'messages.text')
-        ->orderBy('messages.created_at')
-        ->get();
+            ->join('users', 'messages.user_id', '=', 'users.id')
+            ->where('users.uid', $uid)
+            ->where('messages.role', 'user')
+            ->where('is_weekly_free_usage', 0)
+            ->whereBetween('messages.created_at', [$start, $end])
+            ->select('users.email', 'messages.created_at as time', 'messages.text')
+            ->orderBy('messages.created_at')
+            ->get();
 
         $response = new StreamedResponse(function () use ($messages) {
             $handle = fopen('php://output', 'w');
+
+            // Output UTF-8 BOM for correct Persian encoding
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
             fputcsv($handle, ['email', 'time', 'message']);
 
             foreach ($messages as $message) {
-            // Convert time to Asia/Tehran timezone
                 $tehranTime = Carbon::parse($message->time)->setTimezone('Asia/Tehran')->format('Y-m-d H:i:s');
 
-            // Ensure message text uses English digits
                 $text = preg_replace_callback('/[۰-۹٠-٩]/u', function ($match) {
                     $map = ['۰'=>'0','۱'=>'1','۲'=>'2','۳'=>'3','۴'=>'4','۵'=>'5','۶'=>'6','۷'=>'7','۸'=>'8','۹'=>'9',
-                        '٠'=>'0','١'=>'1','٢'=>'2','٣'=>'3','٤'=>'4','٥'=>'5','٦'=>'6','٧'=>'7','٨'=>'8','٩'=>'9'];
+                            '٠'=>'0','١'=>'1','٢'=>'2','٣'=>'3','٤'=>'4','٥'=>'5','٦'=>'6','٧'=>'7','٨'=>'8','٩'=>'9'];
                     return $map[$match[0]];
                 }, $message->text);
 
-                fputcsv($handle, [$message->email, $tehranTime, str_split($text, 20)[0]]);
+                fputcsv($handle, ['    ' . $message->email, $tehranTime, $text]); // <-- 4 spaces before email
             }
 
             fclose($handle);
         });
 
-        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
         $response->headers->set('Content-Disposition', 'attachment; filename="messages_export.csv"');
 
         return $response;
     });
-
 });
