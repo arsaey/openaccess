@@ -84,7 +84,7 @@ Route::group(['prefix' => 'admin'], function () {
                     return $map[$match[0]];
                 }, $message->text);
 
-                fputcsv($handle, ['    ' . $message->email, $tehranTime, $text]); // <-- 4 spaces before email
+                fputcsv($handle, [$message->email, $tehranTime, $text]); // <-- 4 spaces before email
             }
 
             fclose($handle);
