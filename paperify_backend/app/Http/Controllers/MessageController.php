@@ -85,7 +85,7 @@ class MessageController extends Controller
                 ];
 
             }
-            $history = []
+            $history = [];
             foreach ($messages as $i => $message) {
            
                 if ($i > 2)
