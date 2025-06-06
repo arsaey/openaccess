@@ -87,12 +87,14 @@ class MessageController extends Controller
             }
             $history = []
             foreach ($messages as $i => $message) {
+           
                 if ($i > 2)
                     break;
                 $text = ($message->text);
                 list($text, $questions) = $this->extractAndModifyText($text); // Extract and modify text
-                $history = ['role' => $message->role, 'content' => mb_substr($text, 0, 2000)];
-            }
+                $history[] = ['role' => $message->role, 'content' => mb_substr($text, 0, 2000)];
+            
+           }
             
     
             $newMessage = ['role' => 'user', 'content' => $request->get('text')];
@@ -105,7 +107,8 @@ class MessageController extends Controller
                 'is_weekly_free_usage' => $uidUsage->type == 'none'
             ]);
 
-            foreach($history as $h) {  $final[] = $h; }
+
+            foreach ($history as $h) {  $final[] = $h; }
             $newMessage['content'] = mb_substr($newMessage['content'], 0, 2000);
             $final[] = $newMessage;
 
