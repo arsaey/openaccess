@@ -105,7 +105,7 @@ class MessageController extends Controller
                 'is_weekly_free_usage' => $uidUsage->type == 'none'
             ]);
 
-            foreach($history as $h) $final[] = $h;
+            foreach($history as $h) {  $final[] = $h; }
             $newMessage['content'] = mb_substr($newMessage['content'], 0, 2000);
             $final[] = $newMessage;
 
