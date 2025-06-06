@@ -145,7 +145,7 @@ class MessageController extends Controller
             $user->update();
 
             $remainCredit = $uidUsagetype == 'time' ? 'time' : ($uidUsagetype == 'none' ? $uidUsage->remainFreeCredit() : $uidUsage->remainPurchedCredit());
-            return response()->json(['type' => 'assistant', 'text' => $text, 'suggestions' => $questions, 'remain_credit' => $remainCredit]);
+            return response()->json(['type' => 'assistant', 'text' => $text, 'suggestions' => $questions, 'remain_credit' => $remainCredit,'final'=>$final]);
         } else {
             return response()->json(data: ['type' => 'assistant', 'text' => 'you have no credit left', 'suggestions' => []]);
         }
