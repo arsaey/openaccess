@@ -53,7 +53,7 @@ class MessageController extends Controller
                 return response()->json(['type' => 'assistant', 'text' => "Please try again in a few hours; we're experiencing a high volume of requests", 'suggestions' => []]);
             }
 
-            $messages = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->where('role','!=','system')->get();
+            $messages = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'desc')->where('role','!=','system')->get();
             $messagesAllT = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'desc')->get();
 
             $final = [];
