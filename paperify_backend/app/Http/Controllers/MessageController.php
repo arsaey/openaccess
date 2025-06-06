@@ -56,11 +56,11 @@ class MessageController extends Controller
             $messages = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->get();
             $final = [];
             foreach ($messages as $i => $message) {
-                if ($i > 0)
+                if ($i > 2)
                     break;
                 $text = ($message->text);
                 list($text, $questions) = $this->extractAndModifyText($text); // Extract and modify text
-                $final[] = ['role' => $message->role, 'content' => $text];
+                $final[] = ['role' => $message->role, 'content' => mb_substr($text, 0, 2000)];
             }
 
             if (count($final) == 0) {
