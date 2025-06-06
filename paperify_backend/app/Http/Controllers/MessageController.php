@@ -54,7 +54,7 @@ class MessageController extends Controller
             }
 
             $messages = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->where('role','!=','system')->get();
-            $messagesAllT = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->get();
+            $messagesAllT = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'desc')->get();
 
             $final = [];
 
@@ -85,15 +85,15 @@ class MessageController extends Controller
                 ];
 
             }
-
+            $history = []
             foreach ($messages as $i => $message) {
                 if ($i > 2)
                     break;
                 $text = ($message->text);
                 list($text, $questions) = $this->extractAndModifyText($text); // Extract and modify text
-                $final[] = ['role' => $message->role, 'content' => mb_substr($text, 0, 2000)];
+                $history = ['role' => $message->role, 'content' => mb_substr($text, 0, 2000)];
             }
-
+            
     
             $newMessage = ['role' => 'user', 'content' => $request->get('text')];
             Message::create([
@@ -105,13 +105,13 @@ class MessageController extends Controller
                 'is_weekly_free_usage' => $uidUsage->type == 'none'
             ]);
 
-
+            foreach($history as $h) $final[] = $h;
             $newMessage['content'] = mb_substr($newMessage['content'], 0, 2000);
             $final[] = $newMessage;
 
             $result = \App\Services\Chatgpt::client()->chat()->create([
                 'model' => 'gpt-4o-mini-search-preview',
-                'messages' => array_reverse($final)
+                'messages' => ($final)
             ]);
 
 
