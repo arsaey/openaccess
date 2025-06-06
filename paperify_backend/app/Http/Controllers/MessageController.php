@@ -108,7 +108,7 @@ class MessageController extends Controller
             ]);
 
 
-            foreach ($history as $h) {  $final[] = $h; }
+            foreach (array_reverse($history) as $h) {  $final[] = $h; }
             $newMessage['content'] = mb_substr($newMessage['content'], 0, 2000);
             $final[] = $newMessage;
 
