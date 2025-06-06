@@ -89,6 +89,8 @@ class MessageController extends Controller
                 'is_weekly_free_usage' => $uidUsage->type == 'none'
             ]);
 
+
+            $newMessage['content'] = mb_substr($newMessage['content'], 0, 2000);
             $final[] = $newMessage;
             $result = \App\Services\Chatgpt::client()->chat()->create([
                 'model' => 'gpt-4o-mini',
