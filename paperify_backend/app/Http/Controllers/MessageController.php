@@ -109,7 +109,7 @@ class MessageController extends Controller
             $newMessage['content'] = mb_substr($newMessage['content'], 0, 2000);
             $final[] = $newMessage;
             $result = \App\Services\Chatgpt::client()->chat()->create([
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4o-mini-search-preview',
                 'messages' => $final
             ]);
 
