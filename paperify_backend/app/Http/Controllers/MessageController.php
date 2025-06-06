@@ -53,8 +53,39 @@ class MessageController extends Controller
                 return response()->json(['type' => 'assistant', 'text' => "Please try again in a few hours; we're experiencing a high volume of requests", 'suggestions' => []]);
             }
 
-            $messages = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->get();
+            $messages = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->where('role','!=','system')->get();
+            $messagesAllT = Message::where('chat_id', auth()->id() . '_' . $request->id)->orderBy('id', 'asc')->get();
+
             $final = [];
+
+            if (count($messagesAllT??[]) == 0) {
+
+                $final = [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are "Paperify," an expert in analyzing and summarizing scientific articles. Your role is to provide concise (under 300 words), realistic, scientific, and actionable responses based solely on the provided data. Avoid mentioning your identity as an AI or ChatGPT. Always conclude your responses with two  suggestions for further discussion, exactly formatted as  (suggestionsList: suggestion_text; suggestion_text; suggestionsList) to facilitate extraction- never change this format its very important to keep it that way never change the suggestionsList part because i use that for extraction. If an article’s URL or content (e.g., PDF, HTML) is available, analyze it directly for accuracy. If access is unavailable, assume the provided data is accurate and base your interpretation on that. Data: ' . json_encode($request->get('data'))
+                    ],
+                ];
+
+                Message::create([
+                    'user_id' => auth()->user()->id,
+                    'role' => 'system',
+                    'chat_id' => auth()->id() . '_' . $request->id,
+                    'text' => $final[0]['content'],
+                    'show' => 0
+                ]);
+
+            }else{
+ 
+               $final = [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are "Paperify," an expert in analyzing and summarizing scientific articles. Your role is to provide concise (under 300 words), realistic, scientific, and actionable responses based solely on the provided data. Avoid mentioning your identity as an AI or ChatGPT. Always conclude your responses with two  suggestions for further discussion, exactly formatted as  (suggestionsList: suggestion_text; suggestion_text; suggestionsList) to facilitate extraction- never change this format its very important to keep it that way never change the suggestionsList part because i use that for extraction. If an article’s URL or content (e.g., PDF, HTML) is available, analyze it directly for accuracy. If access is unavailable, assume the provided data is accurate and base your interpretation on that. Data: ' . json_encode($request->get('data'))
+                    ],
+                ];
+
+            }
+
             foreach ($messages as $i => $message) {
                 if ($i > 2)
                     break;
@@ -63,22 +94,7 @@ class MessageController extends Controller
                 $final[] = ['role' => $message->role, 'content' => mb_substr($text, 0, 2000)];
             }
 
-            if (count($final) == 0) {
-                $final = [
-                    [
-                        'role' => 'system',
-                        'content' => 'You are "Paperify," an expert in analyzing and summarizing scientific articles. Your role is to provide concise (under 300 words), realistic, scientific, and actionable responses based solely on the provided data. Avoid mentioning your identity as an AI or ChatGPT. Always conclude your responses with two  suggestions for further discussion, exactly formatted as  (suggestionsList: suggestion_text; suggestion_text; suggestionsList) to facilitate extraction- never change this format its very important to keep it that way never change the suggestionsList part because i use that for extraction. If an article’s URL or content (e.g., PDF, HTML) is available, analyze it directly for accuracy. If access is unavailable, assume the provided data is accurate and base your interpretation on that. Data: ' . json_encode($request->get('data'))
-                    ],
-                ];
-                Message::create([
-                    'user_id' => auth()->user()->id,
-                    'role' => 'system',
-                    'chat_id' => auth()->id() . '_' . $request->id,
-                    'text' => $final[0]['content'],
-                    'show' => 0
-                ]);
-            }
-
+    
             $newMessage = ['role' => 'user', 'content' => $request->get('text')];
             Message::create([
                 'user_id' => auth()->user()->id,
